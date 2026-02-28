@@ -79,9 +79,10 @@ async def process_new_comprehensive():
     logger.info(f"   Found {len(today_tasks)} tasks due today")
     
     logger.info("\n📅 STEP 5: Fetching calendar events...")
-    events = await calendar.get_events(days_ahead=1)
+    events = await calendar.get_events(days_ahead=7)  # Get full week
     today_events = [e for e in events if e.get('date') == datetime.now().strftime("%Y-%m-%d")]
     logger.info(f"   Found {len(today_events)} events today")
+    logger.info(f"   Found {len(events)} events in next 7 days")
     
     # Step 5: Create comprehensive summary
     logger.info("\n📝 STEP 6: Creating comprehensive daily summary...")
