@@ -163,25 +163,7 @@ async def process_new_comprehensive():
                 logger.info(f"   Deleted old task: {content[:50]}")
         
         # Build clean title with top 3 actions (for DakBoard visibility)
-        title_parts = [f"📋 {datetime.now().strftime('%b %d')}"]
-        
-        action_count = 0
-        for item in detailed_breakdown['high_priority'][:3]:  # Top 3 only
-            if item['action_items']:
-                # Get first action, keep it short
-                action = item['action_items'][0]
-                # Shorten if too long
-                if len(action) > 60:
-                    action = action[:57] + "..."
-                title_parts.append(f"• {action}")
-                action_count += 1
-        
-        # If we have more items, add count
-        total_high = len(detailed_breakdown['high_priority'])
-        if total_high > 3:
-            title_parts.append(f"+ {total_high - 3} more")
-        
-        task_title = " | ".join(title_parts)
+        task_title = f"📋 {datetime.now().strftime('%b %d')} | {comprehensive_summary}"
         
         # Build detailed description with ALL info
         description_parts = [

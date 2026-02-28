@@ -223,43 +223,40 @@ CONTEXT: [key context]
         events: List[Dict[str, Any]]
     ) -> str:
         """
-        Create a single comprehensive daily summary that includes all context
-        Formatted for DakBoard display (all important info in title)
+        Create clean summary with top 3 actions for DakBoard title
         
         Returns:
-            A single string with all context for DakBoard task title
+            Clean string with top 3 action items only
         """
-        summary_parts = []
+        actions = []
         
-        # High priority email threads with action items
-        high_priority_emails = [a for a in email_analyses if a['priority'] == 'high' and a['action_items']]
-        if high_priority_emails:
-            summary_parts.append("🔴 URGENT:")
-            for analysis in high_priority_emails[:2]:  # Top 2 urgent
-                action = analysis['action_items'][0] if analysis['action_items'] else 'Review'
-                summary_parts.append(f"• {action} ({analysis['latest_sender'].split('<')[0].strip()})")
+        # Collect all actions with priority
+        all_items = []
         
-        # Medium priority with action items
-        medium_priority_emails = [a for a in email_analyses if a['priority'] == 'medium' and a['action_items']]
-        if medium_priority_emails:
-            summary_parts.append("⚠️ ACTION NEEDED:")
-            for analysis in medium_priority_emails[:3]:  # Top 3 medium
-                action = analysis['action_items'][0] if analysis['action_items'] else 'Review'
-                sender_name = analysis['latest_sender'].split('<')[0].strip()
-                summary_parts.append(f"• {action} - {sender_name}")
+        # High priority first
+        for analysis in email_analyses:
+            if analysis.get('action_items') and analysis['priority'] == 'high':
+                for action in analysis['action_items'][:1]:  # First action only
+                    all_items.append((action, 'high'))
         
-        # Follow-ups needed
-        follow_ups = [a for a in email_analyses if a['follow_up_needed']]
-        if follow_ups:
-            summary_parts.append(f"📧 FOLLOW UP: {len(follow_ups)} threads need response")
+        # Medium priority next
+        for analysis in email_analyses:
+            if analysis.get('action_items') and analysis['priority'] == 'medium':
+                for action in analysis['action_items'][:1]:
+                    all_items.append((action, 'medium'))
         
-        # Today's tasks
-        if tasks:
-            summary_parts.append(f"✅ TASKS: {len(tasks)} items due today")
+        # Take top 3 actions
+        for action, priority in all_items[:3]:
+            # Shorten if too long
+            if len(action) > 70:
+                action = action[:67] + "..."
+            actions.append(f"• {action}")
         
-        # Today's events
-        if events:
-            event_times = [e.get('time', 'TBD') for e in events[:3]]
-            summary_parts.append(f"📅 EVENTS: {', '.join(event_times)}")
+        # If no actions, show count
+        if not actions:
+            if email_analyses:
+                return f"{len(email_analyses)} threads to review"
+            else:
+                return "No urgent actions"
         
-        return " | ".join(summary_parts)
+        return " | ".join(actions)
