@@ -1,0 +1,15 @@
+{
+  "server": {
+    "name": "daily-planner",
+    "version": "1.0.0",
+    "description": "MCP Server for daily planning automation with Gmail, Todoist, Calendar, and Amplenote"
+  },
+  "token_refresh": {
+    "interval_seconds": 3600,
+    "enabled": true
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "mcp_server.log"
+  }
+}
