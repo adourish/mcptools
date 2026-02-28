@@ -218,7 +218,42 @@ async def process_new_comprehensive():
                 created_count += 1
                 logger.info(f"   ✅ Created: {action[:60]}")
         
-        logger.info(f"\n   ✅ Created {created_count} individual tasks")
+        # Create tasks for important calendar events (next 3 days)
+        logger.info("\n   Creating tasks for calendar events...")
+        for event in today_events + [e for e in events if e.get('date') != today]:
+            summary = event.get('summary', '')
+            date = event.get('date', '')
+            time = event.get('time', '')
+            
+            # Skip recurring events like regular Taekwondo unless there's something special
+            if 'Cancelled' in summary or 'Brunch' in summary or 'Pickup' in summary or 'Dr' in summary:
+                # Create task for this event
+                task_content = summary
+                if time and time != 'All day':
+                    task_content = f"{summary} at {time}"
+                
+                description = f"Calendar event on {date}"
+                if time:
+                    description += f" at {time}"
+                
+                # Determine priority based on keywords
+                priority = 3  # Medium by default
+                if 'Cancelled' in summary:
+                    priority = 4  # High - need to remember cancellation
+                elif 'Dr' in summary or 'Pickup' in summary:
+                    priority = 4  # High - important appointments
+                
+                await todoist.create_task(
+                    content=task_content,
+                    description=description,
+                    priority=priority,
+                    due_string=date,
+                    labels=['daily-plan', 'calendar']
+                )
+                created_count += 1
+                logger.info(f"   ✅ Created calendar task: {task_content[:60]}")
+        
+        logger.info(f"\n   ✅ Created {created_count} total tasks")
         
     except Exception as e:
         logger.error(f"   ❌ Error creating Todoist tasks: {e}")
