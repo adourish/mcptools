@@ -150,77 +150,78 @@ async def process_new_comprehensive():
     
     logger.info(f"\n💾 Full analysis saved to: {output_file}")
     
-    # Step 8: Create SINGLE Todoist task with comprehensive summary
-    logger.info("\n📋 STEP 8: Creating single comprehensive Todoist task...")
+    # Step 8: Create individual Todoist tasks for each action
+    logger.info("\n📋 STEP 8: Creating individual Todoist tasks...")
     
     try:
         # Delete old daily plan tasks first
         all_tasks = await todoist.get_tasks()
         for task in all_tasks:
             content = task.get('content', '')
-            if content.startswith('📋 Daily Plan') or content.startswith('🎯 TODAY') or content.startswith('⏰ SOON'):
+            labels = task.get('labels', [])
+            if content.startswith('📋') or 'daily-plan' in labels:
                 await todoist.delete_task(task['id'])
                 logger.info(f"   Deleted old task: {content[:50]}")
         
-        # Build clean title with top 3 actions (for DakBoard visibility)
-        task_title = f"📋 {datetime.now().strftime('%b %d')} | {comprehensive_summary}"
+        created_count = 0
         
-        # Build detailed description with ALL info
-        description_parts = [
-            f"Generated: {datetime.now().strftime('%I:%M %p')}",
-            f"Analyzed: {len(thread_analyses)} email threads (2 weeks)",
-            ""
-        ]
-        
-        if detailed_breakdown['high_priority']:
-            description_parts.append("HIGH PRIORITY ACTIONS")
-            description_parts.append("=" * 40)
-            for i, item in enumerate(detailed_breakdown['high_priority'], 1):
-                description_parts.append(f"\n{i}. {item['subject']}")
-                description_parts.append(f"   From: {item.get('latest_from', 'Unknown').split('<')[0].strip()}")
-                if item['action_items']:
-                    description_parts.append(f"   DO: {item['action_items'][0]}")
-                    if len(item['action_items']) > 1:
-                        for action in item['action_items'][1:]:
-                            description_parts.append(f"       {action}")
-                description_parts.append(f"   Why: {item['context']}")
-                description_parts.append("")
-        
-        if detailed_breakdown['follow_ups_needed']:
-            description_parts.append("\nFOLLOW-UPS NEEDED")
-            description_parts.append("=" * 40)
-            for item in detailed_breakdown['follow_ups_needed']:
+        # Create tasks for high priority items
+        for item in detailed_breakdown['high_priority']:
+            if item.get('action_items'):
+                action = item['action_items'][0]
                 sender = item.get('latest_from', 'Unknown').split('<')[0].strip()
-                description_parts.append(f"• {sender}: {item['follow_up']}")
+                
+                # Build description with context
+                description_parts = [
+                    f"From: {sender}",
+                    f"Subject: {item['subject']}",
+                    "",
+                    f"Why: {item['context']}",
+                    "",
+                    f"Outcome: {item['outcome']}"
+                ]
+                
+                # Add additional actions if any
+                if len(item['action_items']) > 1:
+                    description_parts.append("")
+                    description_parts.append("Additional actions:")
+                    for additional_action in item['action_items'][1:]:
+                        description_parts.append(f"• {additional_action}")
+                
+                description = "\n".join(description_parts)
+                
+                await todoist.create_task(
+                    content=action,
+                    description=description,
+                    priority=4,  # High priority (red)
+                    due_string='today',
+                    labels=['daily-plan']
+                )
+                created_count += 1
+                logger.info(f"   ✅ Created: {action[:60]}")
         
-        if today_tasks:
-            description_parts.append("\nTODAY'S TASKS")
-            description_parts.append("=" * 40)
-            for task in today_tasks:
-                description_parts.append(f"• {task['content']}")
+        # Create tasks for medium priority items
+        for item in detailed_breakdown['medium_priority'][:3]:  # Top 3 medium
+            if item.get('action_items'):
+                action = item['action_items'][0]
+                sender = item.get('latest_from', 'Unknown').split('<')[0].strip()
+                
+                description = f"From: {sender}\nSubject: {item['subject']}\n\n{item.get('summary', '')}"
+                
+                await todoist.create_task(
+                    content=action,
+                    description=description,
+                    priority=3,  # Medium priority (orange)
+                    due_string='today',
+                    labels=['daily-plan']
+                )
+                created_count += 1
+                logger.info(f"   ✅ Created: {action[:60]}")
         
-        if today_events:
-            description_parts.append("\nTODAY'S EVENTS")
-            description_parts.append("=" * 40)
-            for event in today_events:
-                time_str = event.get('time', 'TBD')
-                description_parts.append(f"• {time_str}: {event['summary']}")
-        
-        description = "\n".join(description_parts)
-        
-        # Create the task
-        await todoist.create_task(
-            content=task_title,
-            description=description,
-            priority=4,  # High priority (red)
-            due_string='today'
-        )
-        
-        logger.info(f"   ✅ Created comprehensive daily plan task")
-        logger.info(f"   Title length: {len(task_title)} characters")
+        logger.info(f"\n   ✅ Created {created_count} individual tasks")
         
     except Exception as e:
-        logger.error(f"   ❌ Error creating Todoist task: {e}")
+        logger.error(f"   ❌ Error creating Todoist tasks: {e}")
     
     # Step 9: Update Amplenote with detailed analysis
     logger.info("\n📝 STEP 9: Updating Amplenote daily note...")
