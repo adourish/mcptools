@@ -496,76 +496,72 @@ Format as bullet points starting with • or -. Be specific about WHO responded 
             content_lines.append("---")
             content_lines.append("")
             
-            # Add DO NOW section - clean, prioritized list with comprehensive analysis
-            content_lines.append("## 🎯 Priority Actions")
+            # Add DO NOW section - clean, action-oriented format
+            content_lines.append("## 🎯 Today's Actions")
             content_lines.append("")
             
             if plan['do_now']:
-                for i, item in enumerate(plan['do_now'][:8], 1):  # Top 8 items
+                for i, item in enumerate(plan['do_now'][:5], 1):  # Top 5 items only
                     source = item.get('source', '')
-                    source_emoji = {'Email Thread': '📧', 'Email': '📧', 'Calendar': '📅', 'Todoist': '✅'}.get(source, '•')
                     
-                    # For Email Thread items (comprehensive analysis), use action items
+                    # For Email Thread items (comprehensive analysis)
                     if source == 'Email Thread':
-                        # Use first action item as the main title
                         action_items = item.get('action_items', [])
+                        summary = item.get('summary', '')
+                        context = item.get('context', '')
+                        sender = item.get('from', '').split('<')[0].strip() if item.get('from') else 'Unknown'
+                        
+                        # Main action as title
                         if action_items:
-                            title = action_items[0]
+                            content_lines.append(f"### {i}. {action_items[0]}")
                         else:
-                            title = item.get('summary', item.get('title', 'Review email thread'))
+                            content_lines.append(f"### {i}. {item.get('title', 'Review thread')}")
                         
-                        content_lines.append(f"- [ ] **{i}. {source_emoji} {title}**")
+                        content_lines.append("")
                         
-                        # Add thread context
-                        if item.get('context'):
-                            content_lines.append(f"  *Context: {item['context']}*")
+                        # What's this about (one line)
+                        if summary:
+                            # Get first sentence only
+                            first_sentence = summary.split('.')[0] + '.'
+                            content_lines.append(f"**About:** {first_sentence}")
                         
-                        # Add outcome if available
-                        if item.get('outcome') and 'ongoing' not in item['outcome'].lower():
-                            content_lines.append(f"  *Outcome: {item['outcome']}*")
+                        # Why it matters (one line)
+                        if context:
+                            content_lines.append(f"**Why:** {context}")
                         
-                        # Add remaining action items
+                        # Who and when
+                        content_lines.append(f"**From:** {sender}")
+                        
+                        # Additional actions if any
                         if len(action_items) > 1:
-                            content_lines.append(f"  *Additional actions:*")
-                            for action in action_items[1:3]:  # Show up to 2 more
-                                content_lines.append(f"  • {action}")
+                            content_lines.append(f"**Also:** {', '.join(action_items[1:2])}")
                         
-                        # Add sender info
-                        if item.get('from'):
-                            sender = item['from'].split('<')[0].strip()
-                            content_lines.append(f"  From: {sender} ({item.get('email_count', 1)} emails)")
+                        content_lines.append("")
                     
-                    # For regular Email items, use AI summary or title
+                    # For regular Email items
                     elif source == 'Email':
-                        ai_summary = item.get('ai_summary')
-                        if ai_summary:
-                            title = ai_summary
-                        else:
-                            title = item['title']
+                        ai_summary = item.get('ai_summary') or item['title']
+                        sender = item.get('from', '').split('<')[0].strip() if item.get('from') else 'Unknown'
                         
-                        content_lines.append(f"- [ ] **{i}. {source_emoji} {title}**")
+                        content_lines.append(f"### {i}. {ai_summary}")
+                        content_lines.append("")
+                        content_lines.append(f"**From:** {sender}")
                         
                         if item.get('thread_context'):
-                            context = item['thread_context'].split('\n')[0]
-                            if len(context) > 150:
-                                context = context[:150] + "..."
-                            content_lines.append(f"  *{context}*")
+                            context = item['thread_context'].split('.')[0] + '.'
+                            content_lines.append(f"**Context:** {context}")
                         
-                        if item.get('from'):
-                            sender = item['from'].split('<')[0].strip()
-                            content_lines.append(f"  From: {sender}")
+                        content_lines.append("")
                     
-                    # For other items (Calendar, Todoist)
+                    # For Calendar/Todoist
                     else:
-                        title = item['title']
-                        content_lines.append(f"- [ ] **{i}. {source_emoji} {title}**")
-                        
+                        content_lines.append(f"### {i}. {item['title']}")
+                        content_lines.append("")
                         if source == 'Calendar' and item.get('time'):
-                            content_lines.append(f"  ⏰ {item['time']}")
-                    
-                    content_lines.append("")
+                            content_lines.append(f"**Time:** {item['time']}")
+                            content_lines.append("")
             else:
-                content_lines.append("*No urgent items for today*")
+                content_lines.append("*No urgent actions today*")
                 content_lines.append("")
             
             # Add DO SOON section
