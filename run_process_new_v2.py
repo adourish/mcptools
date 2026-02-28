@@ -162,53 +162,67 @@ async def process_new_comprehensive():
                 await todoist.delete_task(task['id'])
                 logger.info(f"   Deleted old task: {content[:50]}")
         
-        # Create single comprehensive task
-        task_title = f"📋 Daily Plan - {datetime.now().strftime('%b %d')} | {comprehensive_summary}"
+        # Build clean title with top 3 actions (for DakBoard visibility)
+        title_parts = [f"📋 {datetime.now().strftime('%b %d')}"]
         
-        # Build detailed description
+        action_count = 0
+        for item in detailed_breakdown['high_priority'][:3]:  # Top 3 only
+            if item['action_items']:
+                # Get first action, keep it short
+                action = item['action_items'][0]
+                # Shorten if too long
+                if len(action) > 60:
+                    action = action[:57] + "..."
+                title_parts.append(f"• {action}")
+                action_count += 1
+        
+        # If we have more items, add count
+        total_high = len(detailed_breakdown['high_priority'])
+        if total_high > 3:
+            title_parts.append(f"+ {total_high - 3} more")
+        
+        task_title = " | ".join(title_parts)
+        
+        # Build detailed description with ALL info
         description_parts = [
-            f"**Generated:** {datetime.now().strftime('%I:%M %p')}",
-            f"**Threads Analyzed:** {len(thread_analyses)} email threads over 2 weeks",
+            f"Generated: {datetime.now().strftime('%I:%M %p')}",
+            f"Analyzed: {len(thread_analyses)} email threads (2 weeks)",
             ""
         ]
         
         if detailed_breakdown['high_priority']:
-            description_parts.append("## 🔴 HIGH PRIORITY")
-            for item in detailed_breakdown['high_priority']:
-                description_parts.append(f"\n### {item['subject']}")
-                description_parts.append(f"**Summary:** {item['summary']}")
-                description_parts.append(f"**Outcome:** {item['outcome']}")
+            description_parts.append("HIGH PRIORITY ACTIONS")
+            description_parts.append("=" * 40)
+            for i, item in enumerate(detailed_breakdown['high_priority'], 1):
+                description_parts.append(f"\n{i}. {item['subject']}")
+                description_parts.append(f"   From: {item.get('latest_from', 'Unknown').split('<')[0].strip()}")
                 if item['action_items']:
-                    description_parts.append("**Actions:**")
-                    for action in item['action_items']:
-                        description_parts.append(f"- {action}")
-                description_parts.append(f"**Context:** {item['context']}")
-                description_parts.append("")
-        
-        if detailed_breakdown['medium_priority']:
-            description_parts.append("## ⚠️ MEDIUM PRIORITY")
-            for item in detailed_breakdown['medium_priority'][:5]:  # Top 5
-                description_parts.append(f"\n### {item['subject']}")
-                description_parts.append(f"**Summary:** {item['summary']}")
-                if item['action_items']:
-                    description_parts.append(f"**Action:** {item['action_items'][0]}")
+                    description_parts.append(f"   DO: {item['action_items'][0]}")
+                    if len(item['action_items']) > 1:
+                        for action in item['action_items'][1:]:
+                            description_parts.append(f"       {action}")
+                description_parts.append(f"   Why: {item['context']}")
                 description_parts.append("")
         
         if detailed_breakdown['follow_ups_needed']:
-            description_parts.append("## 📧 FOLLOW-UPS NEEDED")
+            description_parts.append("\nFOLLOW-UPS NEEDED")
+            description_parts.append("=" * 40)
             for item in detailed_breakdown['follow_ups_needed']:
-                description_parts.append(f"- {item['subject']}: {item['follow_up']}")
+                sender = item.get('latest_from', 'Unknown').split('<')[0].strip()
+                description_parts.append(f"• {sender}: {item['follow_up']}")
         
         if today_tasks:
-            description_parts.append("\n## ✅ TASKS TODAY")
+            description_parts.append("\nTODAY'S TASKS")
+            description_parts.append("=" * 40)
             for task in today_tasks:
-                description_parts.append(f"- {task['content']}")
+                description_parts.append(f"• {task['content']}")
         
         if today_events:
-            description_parts.append("\n## 📅 EVENTS TODAY")
+            description_parts.append("\nTODAY'S EVENTS")
+            description_parts.append("=" * 40)
             for event in today_events:
                 time_str = event.get('time', 'TBD')
-                description_parts.append(f"- {time_str}: {event['summary']}")
+                description_parts.append(f"• {time_str}: {event['summary']}")
         
         description = "\n".join(description_parts)
         
