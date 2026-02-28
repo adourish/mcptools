@@ -28,23 +28,31 @@ cd "G:\My Drive\06_Master_Guides\MCP_Server"
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment Variables
+### 2. Configure API Keys
 
-**IMPORTANT:** This project requires API keys to be set as environment variables for security.
+**IMPORTANT:** This project uses `environments.json` for API key configuration.
 
-1. Copy `.env.example` to `.env`:
-   ```powershell
-   cp .env.example .env
+1. Add your OpenRouter API key to your `environments.json` file:
+   ```json
+   {
+     "environments": {
+       "openrouter": {
+         "credentials": {
+           "apiKey": "your_actual_api_key_here"
+         }
+       },
+       "todoist": {
+         "credentials": {
+           "apiToken": "your_todoist_token"
+         }
+       }
+     }
+   }
    ```
 
-2. Edit `.env` and add your API keys:
-   ```
-   OPENROUTER_API_KEY=your_actual_api_key_here
-   ```
+2. Get your OpenRouter API key from: https://openrouter.ai/keys
 
-3. Get your OpenRouter API key from: https://openrouter.ai/keys
-
-**Never commit `.env` files to version control!** The `.gitignore` file is configured to exclude them.
+**Never commit `environments.json` to version control!** The `.gitignore` file is configured to exclude it.
 
 ### 3. Configure Cascade
 

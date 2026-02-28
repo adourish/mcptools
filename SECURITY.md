@@ -22,10 +22,12 @@ The exposed API key could have been used by unauthorized parties to:
 ### Remediation Steps Taken
 
 1. **Removed hardcoded API key** from source code
-2. **Updated code** to load API key from environment variable (`OPENROUTER_API_KEY`)
-3. **Created `.env.example`** file with placeholder values
-4. **Added `.gitignore`** to prevent future `.env` file commits
-5. **Updated README.md** with security setup instructions
+2. **Updated code** to load API key from `environments.json` via `auth_manager`
+3. **Added `get_openrouter_key()` method** to `AuthManager` class for centralized credential management
+4. **Updated `TodoistTools`** to retrieve key from `auth_manager` instead of hardcoding
+5. **Created `.env.example`** file documenting the `environments.json` structure
+6. **Added `.gitignore`** to prevent future credential file commits
+7. **Updated README.md** with security setup instructions
 
 ### Required Actions
 
@@ -33,24 +35,34 @@ The exposed API key could have been used by unauthorized parties to:
 
 1. **Revoke the exposed key** at https://openrouter.ai/keys
 2. **Generate a new API key**
-3. **Add the new key** to your `.env` file:
+3. **Add the new key** to your `environments.json` file:
+   ```json
+   {
+     "environments": {
+       "openrouter": {
+         "credentials": {
+           "apiKey": "your_new_api_key_here"
+         }
+       }
+     }
+   }
    ```
-   OPENROUTER_API_KEY=your_new_api_key_here
-   ```
-4. **Never commit** the `.env` file to version control
+4. **Never commit** the `environments.json` file to version control
 
 ### Prevention
 
 To prevent similar incidents:
-- ✅ All secrets now use environment variables
-- ✅ `.gitignore` configured to exclude `.env` files
-- ✅ `.env.example` provides template without secrets
+- ✅ All secrets now loaded from `environments.json` via centralized `AuthManager`
+- ✅ `.gitignore` configured to exclude `environments.json` and `config.json`
+- ✅ `.env.example` provides template documenting required configuration
 - ✅ README includes security setup instructions
+- ✅ Credentials managed through single source of truth (`auth_manager`)
 
 ### Best Practices
 
 1. **Never hardcode secrets** in source code
-2. **Use environment variables** for all API keys and tokens
-3. **Keep `.env` files local** and never commit them
-4. **Rotate keys immediately** if exposed
-5. **Use `.env.example`** to document required variables
+2. **Use centralized credential management** (like `AuthManager`) for all API keys and tokens
+3. **Store credentials in `environments.json`** which is excluded from version control
+4. **Keep credential files local** and never commit them
+5. **Rotate keys immediately** if exposed
+6. **Use `.env.example`** to document required configuration structure

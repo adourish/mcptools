@@ -31,6 +31,7 @@ class AuthManager:
         self._gmail_creds = None
         self._todoist_token = None
         self._amplenote_token = None
+        self._openrouter_key = None
         
         logger.info("AuthManager initialized")
     
@@ -95,6 +96,30 @@ class AuthManager:
         except Exception as e:
             logger.error(f"Error getting Amplenote token: {e}")
             raise
+    
+    async def get_openrouter_key(self) -> Optional[str]:
+        """Get OpenRouter API key from environments config"""
+        if self._openrouter_key:
+            return self._openrouter_key
+        
+        try:
+            # Try to get OpenRouter key from environments config
+            if 'openrouter' in self.env_config.get('environments', {}):
+                openrouter_config = self.env_config['environments']['openrouter']
+                if 'credentials' in openrouter_config and 'apiKey' in openrouter_config['credentials']:
+                    self._openrouter_key = openrouter_config['credentials']['apiKey']
+                elif 'apiKey' in openrouter_config:
+                    self._openrouter_key = openrouter_config['apiKey']
+            
+            if self._openrouter_key:
+                logger.info("Loaded OpenRouter API key from environments config")
+            else:
+                logger.warning("OpenRouter API key not found in environments config - AI features will be disabled")
+            
+            return self._openrouter_key
+        except Exception as e:
+            logger.warning(f"Error loading OpenRouter key: {e} - AI features will be disabled")
+            return None
     
     async def refresh_amplenote_token(self) -> str:
         """Refresh Amplenote access token using refresh token"""

@@ -18,21 +18,25 @@ class TodoistTools:
     def __init__(self, auth_manager):
         self.auth_manager = auth_manager
         self.base_url = "https://api.todoist.com/api/v1"
-        # OpenRouter API key from environment variable
-        self.openrouter_key = os.environ.get("OPENROUTER_API_KEY")
-        if self.openrouter_key:
-            logger.info("Loaded OpenRouter API key from environment")
-        else:
-            logger.warning("OPENROUTER_API_KEY not set - AI features will be disabled")
+        # OpenRouter API key will be loaded from auth_manager when needed
+        self.openrouter_key = None
+        self._openrouter_key_loaded = False
     
     async def _get_headers(self) -> Dict[str, str]:
         """Get headers with auth token"""
         token = await self.auth_manager.get_todoist_token()
         return {'Authorization': f'Bearer {token}'}
     
+    async def _ensure_openrouter_key(self) -> bool:
+        """Ensure OpenRouter API key is loaded from auth_manager"""
+        if not self._openrouter_key_loaded:
+            self.openrouter_key = await self.auth_manager.get_openrouter_key()
+            self._openrouter_key_loaded = True
+        return self.openrouter_key is not None
+    
     async def _generate_thread_context(self, subject: str, sender: str, preview: str) -> str:
         """Generate a summary of what's happening in an email thread"""
-        if not self.openrouter_key:
+        if not await self._ensure_openrouter_key():
             return ""
             
         try:
@@ -87,7 +91,7 @@ Summary:"""
     
     async def _generate_task_summary(self, subject: str, sender: str, preview: str) -> str:
         """Use AI to generate actionable task from email content"""
-        if not self.openrouter_key:
+        if not await self._ensure_openrouter_key():
             # Fallback to cleaned subject
             clean_subject = subject
             for prefix in ['RE: [External] Re: ', 'Re: ', 'RE: ', 'FW: ', 'Fwd: ', 'Fw: ']:
