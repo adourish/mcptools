@@ -28,7 +28,25 @@ cd "G:\My Drive\06_Master_Guides\MCP_Server"
 pip install -r requirements.txt
 ```
 
-### 2. Configure Cascade
+### 2. Configure Environment Variables
+
+**IMPORTANT:** This project requires API keys to be set as environment variables for security.
+
+1. Copy `.env.example` to `.env`:
+   ```powershell
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and add your API keys:
+   ```
+   OPENROUTER_API_KEY=your_actual_api_key_here
+   ```
+
+3. Get your OpenRouter API key from: https://openrouter.ai/keys
+
+**Never commit `.env` files to version control!** The `.gitignore` file is configured to exclude them.
+
+### 3. Configure Cascade
 
 Add to your Cascade MCP settings:
 
@@ -44,7 +62,7 @@ Add to your Cascade MCP settings:
 }
 ```
 
-### 3. Start Server
+### 4. Start Server
 
 The server starts automatically when Cascade launches. No manual startup needed.
 

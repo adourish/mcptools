@@ -18,9 +18,12 @@ class TodoistTools:
     def __init__(self, auth_manager):
         self.auth_manager = auth_manager
         self.base_url = "https://api.todoist.com/api/v1"
-        # OpenRouter API key from user's config
-        self.openrouter_key = "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"
-        logger.info("Loaded OpenRouter API key")
+        # OpenRouter API key from environment variable
+        self.openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+        if self.openrouter_key:
+            logger.info("Loaded OpenRouter API key from environment")
+        else:
+            logger.warning("OPENROUTER_API_KEY not set - AI features will be disabled")
     
     async def _get_headers(self) -> Dict[str, str]:
         """Get headers with auth token"""
