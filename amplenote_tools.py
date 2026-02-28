@@ -464,22 +464,7 @@ Format as bullet points starting with • or -. Be specific about WHO responded 
                     logger.warning(f"Error checking note: {e}")
                     continue
             
-            if existing_note_uuid:
-                # Note exists - delete it and create fresh to avoid appending
-                logger.info(f"Deleting existing daily plan note: {existing_note_uuid}")
-                await self.delete_note(existing_note_uuid)
-            
-            # Create fresh note
-            logger.info(f"Creating new daily plan note")
-            note = await self.create_note(
-                title=static_title,
-                content="",
-                tags=['daily-plan', 'process-new']
-            )
-            note_uuid = note['uuid']
-            logger.info(f"Created new daily plan note: {note_uuid}")
-            
-            # Build simple, clean content
+            # Build simple, clean content first
             content_parts = []
             
             # Header
@@ -565,15 +550,22 @@ Format as bullet points starting with • or -. Be specific about WHO responded 
             # Join all content
             full_content = "".join(content_parts)
             
-            # Replace note content
-            success = await self.replace_note_content(note_uuid, full_content)
+            # Delete old note if it exists
+            if existing_note_uuid:
+                logger.info(f"Deleting existing daily plan note: {existing_note_uuid}")
+                await self.delete_note(existing_note_uuid)
             
-            if success:
-                logger.info(f"Daily plan note created successfully: https://www.amplenote.com/notes/{note_uuid}")
-                return True
-            else:
-                logger.error("Failed to update note content")
-                return False
+            # Create fresh note with content
+            logger.info(f"Creating new daily plan note with content")
+            note = await self.create_note(
+                title=static_title,
+                content=full_content,
+                tags=['daily-plan', 'process-new']
+            )
+            note_uuid = note['uuid']
+            
+            logger.info(f"Daily plan note created successfully: https://www.amplenote.com/notes/{note_uuid}")
+            return True
         
         except Exception as e:
             logger.error(f"Error creating daily plan note: {e}")
