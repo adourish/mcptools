@@ -600,12 +600,16 @@ Format as bullet points starting with • or -. Be specific about WHO responded 
             content_lines.append("")
             content_lines.append(f"*{len(plan['do_now'])} priority actions • {len(plan['do_soon'])} upcoming items*")
             
-            # Insert all content lines
-            for line in content_lines:
-                await self.insert_content(note_uuid, line)
+            # Join all content and replace note content at once (avoids reverse ordering)
+            full_content = "\n".join(content_lines)
+            success = await self.replace_note_content(note_uuid, full_content)
             
-            logger.info(f"Daily plan note created successfully: https://www.amplenote.com/notes/{note_uuid}")
-            return True
+            if success:
+                logger.info(f"Daily plan note created successfully: https://www.amplenote.com/notes/{note_uuid}")
+                return True
+            else:
+                logger.error("Failed to update note content")
+                return False
         
         except Exception as e:
             logger.error(f"Error creating daily plan note: {e}")
