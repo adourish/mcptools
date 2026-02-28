@@ -218,7 +218,8 @@ Task:"""
         content: str,
         description: Optional[str] = None,
         priority: int = 1,
-        due_string: Optional[str] = None
+        due_string: Optional[str] = None,
+        labels: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """Create a new task in Todoist"""
         headers = await self._get_headers()
@@ -232,6 +233,8 @@ Task:"""
                 task_data['priority'] = priority
             if due_string:
                 task_data['due_string'] = due_string
+            if labels:
+                task_data['labels'] = labels
             
             response = requests.post(
                 f"{self.base_url}/tasks",
