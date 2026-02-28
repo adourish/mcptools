@@ -479,29 +479,17 @@ Format as bullet points starting with • or -. Be specific about WHO responded 
             note_uuid = note['uuid']
             logger.info(f"Created new daily plan note: {note_uuid}")
             
-            # Build entire note content as a string, then replace all at once
-            content_lines = []
+            # Build simple, clean content
+            content_parts = []
             
-            # Add header with AI-generated executive summary
-            content_lines.append(f"# 📋 Daily Plan")
-            content_lines.append(f"*{datetime.now().strftime('%A, %B %d, %Y at %I:%M %p')}*")
-            content_lines.append("")
+            # Header
+            content_parts.append(f"# Daily Plan - {datetime.now().strftime('%B %d, %Y')}\n")
             
-            # Generate and add AI summary
-            daily_summary = await self._generate_daily_summary(plan)
-            content_lines.append("## 📊 Executive Summary")
-            content_lines.append("")
-            content_lines.append(daily_summary)
-            content_lines.append("")
-            content_lines.append("---")
-            content_lines.append("")
-            
-            # Add DO NOW section - clean, action-oriented format
-            content_lines.append("## 🎯 Today's Actions")
-            content_lines.append("")
+            # Today's Actions
+            content_parts.append("## Today's Actions\n")
             
             if plan['do_now']:
-                for i, item in enumerate(plan['do_now'][:5], 1):  # Top 5 items only
+                for i, item in enumerate(plan['do_now'][:5], 1):
                     source = item.get('source', '')
                     
                     # For Email Thread items (comprehensive analysis)
@@ -511,97 +499,73 @@ Format as bullet points starting with • or -. Be specific about WHO responded 
                         context = item.get('context', '')
                         sender = item.get('from', '').split('<')[0].strip() if item.get('from') else 'Unknown'
                         
-                        # Main action as title
+                        # Main action
                         if action_items:
-                            content_lines.append(f"### {i}. {action_items[0]}")
+                            content_parts.append(f"**{i}. {action_items[0]}**\n")
                         else:
-                            content_lines.append(f"### {i}. {item.get('title', 'Review thread')}")
+                            content_parts.append(f"**{i}. {item.get('title', 'Review thread')}**\n")
                         
-                        content_lines.append("")
-                        
-                        # What's this about (one line)
+                        # Details
                         if summary:
-                            # Get first sentence only
                             first_sentence = summary.split('.')[0] + '.'
-                            content_lines.append(f"**About:** {first_sentence}")
+                            content_parts.append(f"- What: {first_sentence}\n")
                         
-                        # Why it matters (one line)
                         if context:
-                            content_lines.append(f"**Why:** {context}")
+                            content_parts.append(f"- Why: {context}\n")
                         
-                        # Who and when
-                        content_lines.append(f"**From:** {sender}")
+                        content_parts.append(f"- From: {sender}\n")
                         
-                        # Additional actions if any
                         if len(action_items) > 1:
-                            content_lines.append(f"**Also:** {', '.join(action_items[1:2])}")
+                            content_parts.append(f"- Also: {action_items[1]}\n")
                         
-                        content_lines.append("")
+                        content_parts.append("\n")
                     
                     # For regular Email items
                     elif source == 'Email':
                         ai_summary = item.get('ai_summary') or item['title']
                         sender = item.get('from', '').split('<')[0].strip() if item.get('from') else 'Unknown'
                         
-                        content_lines.append(f"### {i}. {ai_summary}")
-                        content_lines.append("")
-                        content_lines.append(f"**From:** {sender}")
-                        
-                        if item.get('thread_context'):
-                            context = item['thread_context'].split('.')[0] + '.'
-                            content_lines.append(f"**Context:** {context}")
-                        
-                        content_lines.append("")
+                        content_parts.append(f"**{i}. {ai_summary}**\n")
+                        content_parts.append(f"- From: {sender}\n\n")
                     
                     # For Calendar/Todoist
                     else:
-                        content_lines.append(f"### {i}. {item['title']}")
-                        content_lines.append("")
+                        content_parts.append(f"**{i}. {item['title']}**\n")
                         if source == 'Calendar' and item.get('time'):
-                            content_lines.append(f"**Time:** {item['time']}")
-                            content_lines.append("")
+                            content_parts.append(f"- Time: {item['time']}\n")
+                        content_parts.append("\n")
             else:
-                content_lines.append("*No urgent actions today*")
-                content_lines.append("")
+                content_parts.append("No urgent actions today\n\n")
             
-            # Add DO SOON section
-            content_lines.append("## ⏰ This Week")
-            content_lines.append("")
+            # Add This Week section
+            content_parts.append("## This Week\n")
             
             if plan['do_soon']:
-                for item in plan['do_soon'][:7]:  # Top 7 items
-                    source_emoji = {'Todoist': '✅', 'Calendar': '📅', 'Email': '📧'}.get(item.get('source'), '•')
+                for item in plan['do_soon'][:5]:
                     title = item['title']
+                    due_str = ""
                     
-                    # Format due date nicely
-                    due_date = item.get('due', '')
-                    if due_date:
+                    if item.get('due'):
                         try:
                             from datetime import datetime as dt
-                            date_obj = dt.strptime(due_date, '%Y-%m-%d')
-                            due_str = date_obj.strftime('%a %b %d')  # "Mon Mar 01"
+                            date_obj = dt.strptime(item['due'], '%Y-%m-%d')
+                            due_str = f" ({date_obj.strftime('%a %b %d')})"
                         except:
-                            due_str = due_date
-                    else:
-                        due_str = ""
+                            due_str = f" ({item['due']})"
                     
-                    time_str = f" at {item['time']}" if item.get('time') else ""
-                    
-                    content_lines.append(f"- [ ] {source_emoji} **{title}**{time_str}")
-                    if due_str:
-                        content_lines.append(f"  📅 {due_str}")
-                    content_lines.append("")
+                    content_parts.append(f"- {title}{due_str}\n")
+                
+                content_parts.append("\n")
             else:
-                content_lines.append("*No upcoming items*")
-                content_lines.append("")
+                content_parts.append("No upcoming items\n\n")
             
-            # Add footer with quick stats
-            content_lines.append("---")
-            content_lines.append("")
-            content_lines.append(f"*{len(plan['do_now'])} priority actions • {len(plan['do_soon'])} upcoming items*")
+            # Footer
+            content_parts.append(f"\n---\n{len(plan['do_now'])} actions today • {len(plan['do_soon'])} upcoming")
             
-            # Join all content and replace note content at once (avoids reverse ordering)
-            full_content = "\n".join(content_lines)
+            # Join all content
+            full_content = "".join(content_parts)
+            
+            # Replace note content
             success = await self.replace_note_content(note_uuid, full_content)
             
             if success:
