@@ -1,263 +1,772 @@
-# Daily Planner MCP Server
+# MCP Daily Planning System
 
-**Eliminates script failures and token expiration issues**
+**Intelligent email and calendar analysis with AI-powered task generation**
 
-## What This Does
-
-Provides MCP tools for:
-- Gmail search and email reading
-- Todoist task management
-- Google Calendar events
-- Amplenote note creation
-- Complete "process new" workflow
-
-**Key Features:**
-- ✅ Automatic token refresh (no more expired tokens)
-- ✅ Direct tool calls (no scripts to fail)
-- ✅ Persistent service (always available)
-- ✅ Centralized authentication
+[![Status](https://img.shields.io/badge/status-production-green)]()
+[![Python](https://img.shields.io/badge/python-3.8+-blue)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 ---
 
-## Setup
+## Executive Summary
 
-### 1. Install Dependencies
+The MCP Daily Planning System is an automated workflow that analyzes your emails and calendar to create actionable daily plans. It uses AI to understand email context, extract specific actions, and prioritize your day.
 
-```powershell
-cd "G:\My Drive\06_Master_Guides\MCP_Server"
-pip install -r requirements.txt
+**Key Benefits:**
+- 📧 Analyzes 2 weeks of email threads for full context
+- 🤖 AI-powered extraction of specific, actionable items
+- 📅 Integrates calendar events with smart prioritization
+- ✅ Creates individual Todoist tasks (no more combined mega-tasks)
+- 🎯 Filters out spam and vague "consider best practices" noise
+- 🔄 Automatic cleanup of old tasks
+
+**Quick Start:**
+```bash
+python run_process_new_v2.py
 ```
 
-### 2. Configure API Keys
+---
 
-**IMPORTANT:** This project uses `environments.json` for API key configuration.
+## Table of Contents
 
-1. Add your OpenRouter API key to your `environments.json` file:
-   ```json
-   {
-     "environments": {
-       "openrouter": {
-         "credentials": {
-           "apiKey": "your_actual_api_key_here"
-         }
-       },
-       "todoist": {
-         "credentials": {
-           "apiToken": "your_todoist_token"
-         }
-       }
-     }
-   }
-   ```
+1. [Business Design](#business-design)
+2. [Feature Overview](#feature-overview)
+3. [Feature Catalog](#feature-catalog)
+4. [System Applicability](#system-applicability)
+5. [User Experience Design](#user-experience-design)
+6. [Technical Design](#technical-design)
+7. [Implementation Plan](#implementation-plan)
+8. [Appendix](#appendix)
 
-2. Get your OpenRouter API key from: https://openrouter.ai/keys
+---
 
-**Never commit `environments.json` to version control!** The `.gitignore` file is configured to exclude it.
+## Business Design
 
-### 3. Configure Cascade
+### Problem Statement
 
-Add to your Cascade MCP settings:
+Modern professionals face information overload:
+- **100+ emails per day** across multiple threads
+- **Calendar conflicts** and forgotten appointments
+- **Context switching** between email, calendar, and task manager
+- **Generic task lists** that don't capture email context
+- **Spam tasks** like "consider best practices" that waste time
 
+### Solution
+
+An intelligent automation system that:
+1. **Analyzes email threads** over 2 weeks to understand full context
+2. **Extracts specific actions** using AI (no vague tasks)
+3. **Integrates calendar events** with smart filtering
+4. **Creates individual tasks** in Todoist with full context
+5. **Cleans up automatically** to prevent task accumulation
+
+### Value Proposition
+
+| Traditional Approach | MCP Daily Planning |
+|---------------------|-------------------|
+| Read 100+ emails manually | AI analyzes 15 priority threads |
+| Create vague tasks | Specific, actionable items only |
+| Forget calendar conflicts | Important events auto-added |
+| Context lost in task manager | Full email context in description |
+| Tasks accumulate | Auto-cleanup with labels |
+| 30+ minutes daily | 30 seconds to review |
+
+### Target Users
+
+- **Busy professionals** managing 50+ emails/day
+- **Project managers** tracking multiple threads
+- **Executives** needing daily briefings
+- **Anyone** using Gmail + Todoist + Google Calendar
+
+---
+
+## Feature Overview
+
+### Core Features
+
+1. **Email Thread Analysis**
+   - Groups emails by subject over 2 weeks
+   - Prioritizes threads by recency, sender, and importance
+   - AI analyzes full thread context
+   - Extracts specific action items only
+
+2. **Calendar Integration**
+   - Fetches events for next 7 days
+   - Filters important events (cancellations, appointments)
+   - Skips routine recurring events
+   - Creates tasks with date/time
+
+3. **AI-Powered Analysis**
+   - Uses OpenRouter (GPT-4o-mini) for understanding
+   - Extracts: summary, outcome, actions, priority, context
+   - Filters out vague/spam actions
+   - Provides "why it matters" context
+
+4. **Task Management**
+   - Individual tasks per action (not combined)
+   - High priority (red) for urgent items
+   - Medium priority (orange) for important items
+   - Auto-cleanup with `daily-plan` label
+
+5. **DakBoard Display**
+   - Clean, scannable task titles
+   - No clutter or generic text
+   - Full context in task description
+   - Calendar events clearly marked
+
+---
+
+## Feature Catalog
+
+### Email Analysis Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| 2-Week Lookback | Analyzes emails from last 14 days | ✅ Production |
+| Thread Grouping | Groups emails by subject (removes RE:/FW:) | ✅ Production |
+| Priority Scoring | Ranks threads by recency, sender, count | ✅ Production |
+| Top 15 Analysis | Analyzes only top 15 threads (cost optimization) | ✅ Production |
+| AI Context Extraction | Understands full thread conversation | ✅ Production |
+| Action Item Extraction | Pulls specific, concrete actions only | ✅ Production |
+| Spam Filtering | Rejects vague "consider/review" tasks | ✅ Production |
+| Follow-up Detection | Identifies threads needing response | ✅ Production |
+
+### Calendar Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| 7-Day Lookahead | Fetches events for next week | ✅ Production |
+| Event Filtering | Includes cancellations, appointments, social | ✅ Production |
+| Recurring Skip | Skips routine events (e.g., regular Taekwondo) | ✅ Production |
+| Cancellation Alert | High priority for cancelled events | ✅ Production |
+| Time Display | Shows event time in task title | ✅ Production |
+
+### Task Creation Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Individual Tasks | One task per action (not combined) | ✅ Production |
+| Auto-Cleanup | Deletes old `daily-plan` tasks | ✅ Production |
+| Priority Levels | High (red), Medium (orange) | ✅ Production |
+| Rich Descriptions | Includes who, what, why, context | ✅ Production |
+| Label Tagging | `daily-plan` and `calendar` labels | ✅ Production |
+| Due Dates | Sets appropriate due dates | ✅ Production |
+
+### Optional Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Amplenote Integration | Creates daily plan note | ✅ Optional |
+| JSON Export | Saves full analysis to file | ✅ Production |
+| Console Logging | Detailed execution trace | ✅ Production |
+
+---
+
+## System Applicability
+
+### Supported Platforms
+
+- **Operating Systems:** Windows, macOS, Linux
+- **Python:** 3.8+
+- **Email:** Gmail (via Gmail API)
+- **Calendar:** Google Calendar (via Calendar API)
+- **Tasks:** Todoist (via Todoist API v1)
+- **Notes:** Amplenote (via Amplenote API v4) - Optional
+- **AI:** OpenRouter (GPT-4o-mini)
+
+### Integration Requirements
+
+| Service | Requirement | Purpose |
+|---------|------------|---------|
+| Gmail API | OAuth 2.0 credentials | Email fetching |
+| Google Calendar API | OAuth 2.0 credentials | Event fetching |
+| Todoist API | API token | Task creation |
+| OpenRouter API | API key | AI analysis |
+| Amplenote API | OAuth token | Note creation (optional) |
+
+### Deployment Options
+
+1. **Local Execution** - Run manually when needed
+2. **Scheduled Task** - Windows Task Scheduler / cron
+3. **Always-On Server** - Run on home server / VPS
+4. **Cloud Function** - AWS Lambda / Google Cloud Functions (future)
+
+---
+
+## User Experience Design
+
+### User Personas
+
+#### Persona 1: The Busy Executive
+- **Name:** Sarah, VP of Operations
+- **Email Volume:** 150+ emails/day
+- **Pain Points:** Misses important emails, forgets follow-ups
+- **Goals:** Stay on top of priorities without reading every email
+- **Usage:** Runs daily at 6 AM, reviews tasks over coffee
+
+#### Persona 2: The Project Manager
+- **Name:** Mike, Senior PM
+- **Email Volume:** 80+ emails/day across 10 projects
+- **Pain Points:** Context switching, lost email threads
+- **Goals:** Track action items across multiple projects
+- **Usage:** Runs after lunch, syncs with team standup
+
+#### Persona 3: The Consultant
+- **Name:** Alex, Independent Consultant
+- **Email Volume:** 50+ emails/day from multiple clients
+- **Pain Points:** Calendar conflicts, missed appointments
+- **Goals:** Never miss a client meeting or deadline
+- **Usage:** Runs morning and evening, checks before meetings
+
+---
+
+### User Journeys
+
+#### Journey 1: Morning Planning Routine
+
+```
+1. Wake up (6:00 AM)
+   ↓
+2. Run: python run_process_new_v2.py
+   ↓
+3. System analyzes:
+   - 127 emails from last 2 weeks
+   - 42 email threads
+   - 6 calendar events
+   ↓
+4. AI extracts:
+   - 3 high priority actions
+   - 2 medium priority actions
+   - 4 calendar events
+   ↓
+5. Creates 9 Todoist tasks
+   ↓
+6. User opens DakBoard (6:05 AM)
+   ↓
+7. Sees clean list:
+   - Reply to Sarah about phonics
+   - Brunch with KO at 12 PM
+   - TKD cancelled Wednesday
+   - Dr Howard Friday 5 PM
+   ↓
+8. User knows exactly what to do
+   ↓
+9. Starts day with clarity (6:10 AM)
+```
+
+**Time Saved:** 25 minutes (vs. reading 127 emails)
+
+#### Journey 2: Handling Email Overload
+
+```
+1. Return from vacation (100+ unread emails)
+   ↓
+2. Run: python run_process_new_v2.py
+   ↓
+3. System groups into 35 threads
+   ↓
+4. Analyzes top 15 priority threads
+   ↓
+5. Extracts 8 action items
+   ↓
+6. User focuses on 8 tasks (not 100 emails)
+   ↓
+7. Completes high priority items
+   ↓
+8. Archives remaining emails
+```
+
+**Time Saved:** 2+ hours
+
+#### Journey 3: Calendar Conflict Prevention
+
+```
+1. System runs daily at 6 AM
+   ↓
+2. Detects: "Cancelled TKD March 4 Wednesday"
+   ↓
+3. Creates high priority task (red)
+   ↓
+4. User sees on DakBoard
+   ↓
+5. Doesn't drive to cancelled class
+   ↓
+6. Saves 1 hour + gas
+```
+
+**Value:** Prevents wasted time
+
+---
+
+### Wireframes
+
+#### DakBoard Display (Before)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Todoist - Today                                          │
+├─────────────────────────────────────────────────────────┤
+│ 📋 Daily Plan - Feb 28 | ⚠️ ACTION NEEDED: | • Review   │
+│ the attached agenda for the week. - "Prescott, Lisa K"  │
+│ | • Consider responding to Sarah with your preference   │
+│ regarding the shift towards phonics/spelling. -         │
+│ "Williams, Sarah H 1" | • Investigate potential         │
+│ compliance strategies that balance age-verification     │
+│ with data protection. - CodeProject Trending Technology │
+│ | 📧 FOLLOW UP: 3 threads need response                 │
+└─────────────────────────────────────────────────────────┘
+```
+**Problems:** Cluttered, hard to read, vague actions
+
+#### DakBoard Display (After)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Todoist - Today                                          │
+├─────────────────────────────────────────────────────────┤
+│ 🔴 Reply to Sarah about phonics/spelling focus          │
+│ 🟠 Review attached agenda for important dates           │
+│ 🟠 Purchase tickets for "Scream 7" if interested        │
+│ 🟠 Brunch with KO at 12:00 PM                           │
+│ 🔴 Cancelled TKD March 4 Wednesday at 06:30 PM          │
+│ 🔴 Couch Pickup at 06:00 AM (Friday)                    │
+│ 🔴 Dr Howard at 05:00 PM (Friday)                       │
+└─────────────────────────────────────────────────────────┘
+```
+**Benefits:** Clean, scannable, specific actions
+
+---
+
+### Interaction Flows
+
+#### Flow 1: Task Creation
+
+```mermaid
+graph TD
+    A[Email Received] --> B{Part of Thread?}
+    B -->|Yes| C[Add to Thread]
+    B -->|No| D[Create New Thread]
+    C --> E[Wait 14 Days]
+    D --> E
+    E --> F[Daily Run at 6 AM]
+    F --> G[Group Threads]
+    G --> H[Score Priority]
+    H --> I[Select Top 15]
+    I --> J[AI Analysis]
+    J --> K{Has Actions?}
+    K -->|Yes| L[Create Task]
+    K -->|No| M[Skip]
+    L --> N[Add to Todoist]
+    N --> O[Display on DakBoard]
+```
+
+#### Flow 2: Calendar Event Processing
+
+```mermaid
+graph TD
+    A[Calendar Event] --> B{Important?}
+    B -->|Cancelled| C[High Priority Task]
+    B -->|Appointment| C
+    B -->|Social| D[Medium Priority Task]
+    B -->|Recurring| E{Special?}
+    E -->|Yes| D
+    E -->|No| F[Skip]
+    C --> G[Add to Todoist]
+    D --> G
+    G --> H[Display on DakBoard]
+```
+
+---
+
+## Technical Design
+
+### Data Model
+
+#### Email Thread Object
+```python
+{
+    "subject": str,           # Thread subject (cleaned)
+    "emails": [               # List of emails in thread
+        {
+            "id": str,
+            "from": str,
+            "date": str,
+            "body": str,
+            "preview": str
+        }
+    ],
+    "priority_score": float,  # Calculated priority
+    "latest_date": str        # Most recent email date
+}
+```
+
+#### Analysis Object
+```python
+{
+    "summary": str,           # What happened
+    "outcome": str,           # What's resolved
+    "action_items": [str],    # Specific actions
+    "follow_up_needed": bool, # Needs response?
+    "follow_up_reason": str,  # Why/when/who
+    "priority": str,          # high/medium/low
+    "priority_reason": str,   # Why this priority
+    "context": str,           # Why it matters
+    "thread_subject": str,    # Original subject
+    "email_count": int,       # Emails in thread
+    "latest_sender": str,     # Who sent last
+    "latest_date": str        # When sent
+}
+```
+
+#### Task Object
+```python
+{
+    "content": str,           # Task title
+    "description": str,       # Full context
+    "priority": int,          # 1-4 (4=high)
+    "due_string": str,        # "today", "2026-03-01"
+    "labels": [str]           # ["daily-plan", "calendar"]
+}
+```
+
+---
+
+### Architecture
+
+See [docs/architecture.md](docs/architecture.md) for detailed class diagram and process flow.
+
+**High-Level Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   User Interface                         │
+│              (DakBoard / Todoist App)                    │
+└─────────────────────────────────────────────────────────┘
+                         ↑
+                         │ Tasks
+                         │
+┌─────────────────────────────────────────────────────────┐
+│              run_process_new_v2.py                       │
+│              (Main Orchestrator)                         │
+└─────────────────────────────────────────────────────────┘
+         ↓              ↓              ↓              ↓
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ GmailTools   │ │CalendarTools │ │TodoistTools  │ │AmplenoteTools│
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+         ↓              ↓              ↓              ↓
+┌─────────────────────────────────────────────────────────┐
+│                   AuthManager                            │
+│         (Centralized Credential Management)              │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│              environments.json                           │
+│         (External Configuration File)                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+### API Specifications
+
+#### Gmail API
+- **Endpoint:** `https://gmail.googleapis.com/gmail/v1`
+- **Authentication:** OAuth 2.0
+- **Methods Used:**
+  - `users.messages.list` - Search emails
+  - `users.messages.get` - Fetch email content
+
+#### Todoist API
+- **Endpoint:** `https://api.todoist.com/api/v1`
+- **Authentication:** Bearer token
+- **Methods Used:**
+  - `GET /tasks` - List tasks
+  - `POST /tasks` - Create task
+  - `DELETE /tasks/{id}` - Delete task
+
+#### OpenRouter API
+- **Endpoint:** `https://openrouter.ai/api/v1`
+- **Authentication:** Bearer token
+- **Model:** `openai/gpt-4o-mini`
+- **Methods Used:**
+  - `POST /chat/completions` - AI analysis
+
+#### Amplenote API (Optional)
+- **Endpoint:** `https://api.amplenote.com/v4`
+- **Authentication:** OAuth 2.0
+- **Methods Used:**
+  - `GET /notes` - List notes
+  - `POST /notes` - Create note
+  - `DELETE /notes/{uuid}` - Delete note
+
+---
+
+### Security Model
+
+See [docs/credential_audit.md](docs/credential_audit.md) for full security audit.
+
+**Security Principles:**
+
+1. **Separation of Concerns**
+   - Credentials stored outside repository
+   - Configuration in secure location
+   - Single source of truth
+
+2. **Lazy Loading**
+   - Credentials loaded only when needed
+   - Reduces memory footprint
+   - Prevents unnecessary API calls
+
+3. **Dependency Injection**
+   - AuthManager injected into all tools
+   - Easy to mock for testing
+   - Centralized rotation
+
+4. **No Hardcoded Secrets**
+   - All credentials parameterized
+   - Loaded from `environments.json`
+   - File outside Git repository
+
+5. **Token Refresh**
+   - Automatic Amplenote token refresh
+   - Graceful handling of expiry
+   - Retry logic after refresh
+
+**Credential Storage:**
+```
+G:\My Drive\03_Areas\Keys\Environments\environments.json
+```
+(Outside repository, not in version control)
+
+---
+
+## Implementation Plan
+
+### Phase 1: Setup (Completed ✅)
+- [x] Create project structure
+- [x] Implement AuthManager
+- [x] Set up Gmail/Calendar/Todoist integrations
+- [x] Configure environments.json
+
+### Phase 2: Core Features (Completed ✅)
+- [x] Email thread grouping
+- [x] Priority scoring
+- [x] AI analysis integration
+- [x] Task creation workflow
+- [x] Calendar integration
+
+### Phase 3: Quality Improvements (Completed ✅)
+- [x] Spam filtering in AI prompts
+- [x] Individual task creation
+- [x] Auto-cleanup with labels
+- [x] Calendar event filtering
+- [x] Command line arguments
+
+### Phase 4: Documentation (Completed ✅)
+- [x] Architecture documentation
+- [x] Usage guide
+- [x] Security audit
+- [x] Comprehensive README
+
+### Phase 5: Future Enhancements (Planned)
+- [ ] Web UI for configuration
+- [ ] Multiple calendar support
+- [ ] Custom filter rules
+- [ ] Rate limiting and retry logic
+- [ ] Caching of AI analyses
+- [ ] Support for other task managers
+- [ ] Mobile app integration
+- [ ] Team collaboration features
+
+---
+
+## Appendix
+
+### A. Naming Considerations
+
+**Project Name:** MCP Daily Planning System
+- **MCP:** Model Context Protocol (standard for AI integrations)
+- **Daily Planning:** Core use case
+- **System:** Comprehensive solution
+
+**Alternative Names Considered:**
+- Email Intelligence Platform
+- Smart Task Generator
+- Context-Aware Planning System
+- AI Daily Briefing
+
+**Label Naming:**
+- `daily-plan` - All auto-generated tasks
+- `calendar` - Calendar-derived tasks
+- Simple, lowercase, hyphenated
+
+---
+
+### B. Integration Points
+
+#### Current Integrations
+
+| Service | Integration Type | Purpose |
+|---------|-----------------|---------|
+| Gmail | OAuth 2.0 API | Email fetching |
+| Google Calendar | OAuth 2.0 API | Event fetching |
+| Todoist | REST API | Task management |
+| OpenRouter | REST API | AI analysis |
+| Amplenote | OAuth 2.0 API | Note creation (optional) |
+
+#### Potential Future Integrations
+
+| Service | Purpose | Priority |
+|---------|---------|----------|
+| Microsoft 365 | Email/Calendar for Outlook users | High |
+| Slack | Team notifications | Medium |
+| Notion | Knowledge base integration | Medium |
+| Asana | Alternative task manager | Low |
+| Linear | Developer task tracking | Low |
+| Discord | Personal notifications | Low |
+
+---
+
+### C. Future Enhancements
+
+#### Short-Term (Next 3 Months)
+
+1. **Web Configuration UI**
+   - Visual filter editor
+   - Whitelist/blacklist management
+   - Test mode with preview
+   - Schedule configuration
+
+2. **Enhanced Filtering**
+   - Custom regex patterns
+   - Sender importance scoring
+   - Subject keyword weighting
+   - Time-based rules
+
+3. **Better Error Handling**
+   - Rate limit detection
+   - Automatic retry with backoff
+   - Graceful degradation
+   - Error notifications
+
+#### Mid-Term (3-6 Months)
+
+1. **Multi-User Support**
+   - Team shared calendars
+   - Delegated task assignment
+   - Shared email analysis
+   - Role-based access
+
+2. **Advanced AI Features**
+   - Sentiment analysis
+   - Urgency detection
+   - Relationship mapping
+   - Automatic categorization
+
+3. **Analytics Dashboard**
+   - Email volume trends
+   - Response time tracking
+   - Task completion rates
+   - Productivity insights
+
+#### Long-Term (6-12 Months)
+
+1. **Mobile App**
+   - iOS/Android apps
+   - Push notifications
+   - Quick task creation
+   - Voice input
+
+2. **Machine Learning**
+   - Personalized priority scoring
+   - Learn from user behavior
+   - Predict task duration
+   - Suggest optimal scheduling
+
+3. **Enterprise Features**
+   - SSO integration
+   - Audit logging
+   - Compliance reporting
+   - Custom deployment
+
+---
+
+## Quick Reference
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/adourish/mcptools.git
+cd mcptools
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure credentials
+# Edit: G:\My Drive\03_Areas\Keys\Environments\environments.json
+```
+
+### Usage
+
+```bash
+# Basic usage (default environment path)
+python run_process_new_v2.py
+
+# Custom environment path
+python run_process_new_v2.py --env-path /path/to/environments.json
+
+# Help
+python run_process_new_v2.py --help
+```
+
+### Configuration
+
+**Environment File:** `environments.json`
 ```json
 {
-  "mcpServers": {
-    "daily-planner": {
-      "command": "python",
-      "args": ["G:\\My Drive\\06_Master_Guides\\MCP_Server\\server.py"],
-      "env": {}
-    }
+  "environments": {
+    "gmail": { "credentials": {...} },
+    "todoist": { "credentials": {"apiToken": "..."} },
+    "openrouter": { "credentials": {"apiKey": "sk-or-v1-..."} },
+    "amplenote": { "oauth": {...} }
   }
 }
 ```
 
-### 4. Start Server
+### Output
 
-The server starts automatically when Cascade launches. No manual startup needed.
-
----
-
-## Available Tools
-
-### Gmail Tools
-
-**`gmail_search`** - Search Gmail
-```
-Arguments:
-  query: Gmail search query (e.g., "from:example@gmail.com subject:invoice")
-  max_results: Maximum results (default: 10)
-```
-
-**`gmail_get_email`** - Get full email content
-```
-Arguments:
-  message_id: Gmail message ID
-```
-
-### Todoist Tools
-
-**`todoist_get_tasks`** - Get tasks
-```
-Arguments:
-  filter: Optional filter (e.g., "today", "overdue", "p1")
-```
-
-**`todoist_create_task`** - Create task
-```
-Arguments:
-  content: Task title (required)
-  description: Task description
-  priority: 1-4 (4 is urgent)
-  due_string: Natural language date (e.g., "tomorrow")
-```
-
-**`todoist_update_task`** - Update task
-```
-Arguments:
-  task_id: Task ID to update (required)
-  content: New title
-  description: New description
-  priority: New priority
-```
-
-### Calendar Tools
-
-**`calendar_get_events`** - Get calendar events
-```
-Arguments:
-  days_ahead: Days to look ahead (default: 7)
-```
-
-### Amplenote Tools
-
-**`amplenote_create_note`** - Create note
-```
-Arguments:
-  title: Note title (required)
-  content: Note content (required)
-  tags: Array of tags
-```
-
-### Workflow Tools
-
-**`process_new`** - Complete daily planning workflow
-```
-Arguments: None
-
-Scans emails, tasks, calendar and creates daily plan
-```
+- **Todoist Tasks:** Individual tasks with `daily-plan` label
+- **JSON File:** `output/comprehensive_analysis_YYYYMMDD_HHMMSS.json`
+- **Amplenote Note:** Optional daily plan note
+- **Console:** Detailed execution log
 
 ---
 
-## Usage Examples
+## Support
 
-### In Cascade
+**Documentation:**
+- [Architecture](docs/architecture.md) - System design and diagrams
+- [Usage Guide](docs/usage.md) - Detailed usage instructions
+- [Security Audit](docs/credential_audit.md) - Security verification
 
-**Search for emails:**
-```
-"Search Gmail for Kings Manor emails"
-→ I'll call gmail_search tool with query "Kings Manor"
-```
+**Issues:**
+- Report bugs via GitHub Issues
+- Feature requests welcome
+- Pull requests accepted
 
-**Create a task:**
-```
-"Create a task to renew vehicle registration"
-→ I'll call todoist_create_task with the details
-```
-
-**Run process new:**
-```
-"process new"
-→ I'll call process_new tool to generate your daily plan
-```
+**Contact:**
+- GitHub: [@adourish](https://github.com/adourish)
+- Repository: [mcptools](https://github.com/adourish/mcptools)
 
 ---
 
-## Token Management
+## License
 
-**Automatic Refresh:**
-- Gmail tokens refresh every hour
-- Todoist tokens don't expire
-- Amplenote tokens managed automatically
-
-**No more:**
-- ❌ Token expired errors
-- ❌ Manual token refresh
-- ❌ Script authentication failures
+MIT License - See LICENSE file for details
 
 ---
 
-## Troubleshooting
-
-**Server not starting:**
-1. Check Python version (3.9+)
-2. Verify dependencies installed
-3. Check Cascade MCP settings
-
-**Tool calls failing:**
-1. Check server logs: `mcp_server.log`
-2. Verify token files exist
-3. Restart Cascade
-
-**Token issues:**
-- Server auto-refreshes tokens every hour
-- Check `gmail_token.json` exists
-- Verify `environments.json` has correct credentials
-
----
-
-## Architecture
-
-```
-Cascade
-  ↓
-MCP Server (server.py)
-  ↓
-├── AuthManager (auto-refresh tokens)
-├── GmailTools (email operations)
-├── TodoistTools (task operations)
-├── CalendarTools (calendar operations)
-└── AmplenoteTools (note operations)
-```
-
-**Benefits:**
-- Single point of authentication
-- No script failures
-- Always available
-- Auto-healing (token refresh)
-
----
-
-## Migration from Scripts
-
-**Before (scripts):**
-```
-You: "create a task"
-Cascade: run_command → python create_task.py
-         → Error: Token expired
-         → Multiple attempts needed
-```
-
-**After (MCP):**
-```
-You: "create a task"
-Cascade: todoist_create_task(...)
-         → Works immediately
-```
-
-**No more:**
-- Script files
-- Token management
-- Error handling
-- Manual intervention
-
----
-
-## Next Steps
-
-1. ✅ Server created
-2. ⏳ Install dependencies
-3. ⏳ Configure Cascade
-4. ⏳ Test tools
-5. ⏳ Migrate workflows
-
-**Your daily planning is now reliable and automated!**
+**Last Updated:** February 28, 2026  
+**Version:** 2.0  
+**Status:** Production Ready ✅

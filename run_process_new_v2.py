@@ -7,6 +7,7 @@ Analyzes email threads over 2 weeks with full context and creates single consoli
 import asyncio
 import json
 import logging
+import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -24,17 +25,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-ENV_PATH = Path(r'G:\My Drive\03_Areas\Keys\Environments\environments.json')
+# Default environment path (can be overridden via command line)
+DEFAULT_ENV_PATH = Path(r'G:\My Drive\03_Areas\Keys\Environments\environments.json')
 
-async def process_new_comprehensive():
-    """Execute comprehensive process new workflow with 2-week thread analysis"""
+async def process_new_comprehensive(env_path: Path = DEFAULT_ENV_PATH):
+    """Execute comprehensive process new workflow with 2-week thread analysis
+    
+    Args:
+        env_path: Path to environments.json file (default: DEFAULT_ENV_PATH)
+    """
     logger.info("=" * 80)
     logger.info("COMPREHENSIVE PROCESS NEW WORKFLOW - V2")
     logger.info("Analyzing email threads over 2 weeks with full context")
+    logger.info(f"Using environment file: {env_path}")
     logger.info("=" * 80)
     
     # Initialize tools
-    auth_manager = AuthManager(ENV_PATH)
+    auth_manager = AuthManager(env_path)
     gmail = GmailTools(auth_manager)
     thread_tools = GmailThreadTools(gmail)
     analyzer = ComprehensiveAnalyzer(auth_manager)
@@ -319,8 +326,40 @@ async def process_new_comprehensive():
     return detailed_breakdown
 
 async def main():
+    """Main entry point with argument parsing"""
+    parser = argparse.ArgumentParser(
+        description='MCP Daily Planning System - Comprehensive email and calendar analysis',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Use default environment path
+  python run_process_new_v2.py
+  
+  # Use custom environment path
+  python run_process_new_v2.py --env-path /path/to/environments.json
+  
+  # Use custom path with spaces
+  python run_process_new_v2.py --env-path "C:\\My Path\\environments.json"
+        """
+    )
+    
+    parser.add_argument(
+        '--env-path',
+        type=Path,
+        default=DEFAULT_ENV_PATH,
+        help=f'Path to environments.json file (default: {DEFAULT_ENV_PATH})'
+    )
+    
+    args = parser.parse_args()
+    
+    # Validate environment file exists
+    if not args.env_path.exists():
+        logger.error(f"Environment file not found: {args.env_path}")
+        logger.error(f"Please create the file or specify a different path with --env-path")
+        return False
+    
     try:
-        result = await process_new_comprehensive()
+        result = await process_new_comprehensive(env_path=args.env_path)
         return result
     except Exception as e:
         logger.error(f"Error running comprehensive process: {e}", exc_info=True)
