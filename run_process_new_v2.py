@@ -178,16 +178,30 @@ async def process_new_comprehensive(env_path: Path = DEFAULT_ENV_PATH):
             if item.get('action_items'):
                 action = item['action_items'][0]
                 sender = item.get('latest_from', 'Unknown').split('<')[0].strip()
+                summary = item.get('summary', '')
+                context = item.get('context', '')
                 
-                # Add sender context to task title for better visibility
-                task_title = f"{action} (from {sender})"
+                # Build comprehensive title for DakBoard (only place visible)
+                # Include action + key context/summary
+                if summary and len(summary) < 100:
+                    task_title = f"{action} - {summary}"
+                elif context and len(context) < 100:
+                    task_title = f"{action} - {context}"
+                else:
+                    # Use first 150 chars of summary/context
+                    key_info = summary or context or ""
+                    if len(key_info) > 100:
+                        key_info = key_info[:100] + "..."
+                    task_title = f"{action} - {key_info}" if key_info else action
                 
-                # Build description with context
+                # Build description with full context
                 description_parts = [
                     f"From: {sender}",
                     f"Subject: {item['subject']}",
                     "",
-                    f"Why: {item['context']}",
+                    f"Summary: {summary}",
+                    "",
+                    f"Context: {context}",
                     "",
                     f"Outcome: {item['outcome']}"
                 ]
@@ -209,18 +223,28 @@ async def process_new_comprehensive(env_path: Path = DEFAULT_ENV_PATH):
                     labels=['daily-plan']
                 )
                 created_count += 1
-                logger.info(f"   ✅ Created: {task_title[:60]}")
+                logger.info(f"   ✅ Created: {task_title[:80]}")
         
         # Create tasks for medium priority items
         for item in detailed_breakdown['medium_priority'][:3]:  # Top 3 medium
             if item.get('action_items'):
                 action = item['action_items'][0]
                 sender = item.get('latest_from', 'Unknown').split('<')[0].strip()
+                summary = item.get('summary', '')
+                context = item.get('context', '')
                 
-                # Add sender context to task title
-                task_title = f"{action} (from {sender})"
+                # Build comprehensive title for DakBoard
+                if summary and len(summary) < 100:
+                    task_title = f"{action} - {summary}"
+                elif context and len(context) < 100:
+                    task_title = f"{action} - {context}"
+                else:
+                    key_info = summary or context or ""
+                    if len(key_info) > 100:
+                        key_info = key_info[:100] + "..."
+                    task_title = f"{action} - {key_info}" if key_info else action
                 
-                description = f"From: {sender}\nSubject: {item['subject']}\n\n{item.get('summary', '')}"
+                description = f"From: {sender}\nSubject: {item['subject']}\n\nSummary: {summary}\n\nContext: {context}"
                 
                 await todoist.create_task(
                     content=task_title,
@@ -230,7 +254,7 @@ async def process_new_comprehensive(env_path: Path = DEFAULT_ENV_PATH):
                     labels=['daily-plan']
                 )
                 created_count += 1
-                logger.info(f"   ✅ Created: {task_title[:60]}")
+                logger.info(f"   ✅ Created: {task_title[:80]}")
         
         # Create tasks for important calendar events (next 3 days)
         logger.info("\n   Creating tasks for calendar events...")
