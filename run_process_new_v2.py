@@ -179,6 +179,9 @@ async def process_new_comprehensive(env_path: Path = DEFAULT_ENV_PATH):
                 action = item['action_items'][0]
                 sender = item.get('latest_from', 'Unknown').split('<')[0].strip()
                 
+                # Add sender context to task title for better visibility
+                task_title = f"{action} (from {sender})"
+                
                 # Build description with context
                 description_parts = [
                     f"From: {sender}",
@@ -199,14 +202,14 @@ async def process_new_comprehensive(env_path: Path = DEFAULT_ENV_PATH):
                 description = "\n".join(description_parts)
                 
                 await todoist.create_task(
-                    content=action,
+                    content=task_title,
                     description=description,
                     priority=4,  # High priority (red)
                     due_string='today',
                     labels=['daily-plan']
                 )
                 created_count += 1
-                logger.info(f"   ✅ Created: {action[:60]}")
+                logger.info(f"   ✅ Created: {task_title[:60]}")
         
         # Create tasks for medium priority items
         for item in detailed_breakdown['medium_priority'][:3]:  # Top 3 medium
@@ -214,17 +217,20 @@ async def process_new_comprehensive(env_path: Path = DEFAULT_ENV_PATH):
                 action = item['action_items'][0]
                 sender = item.get('latest_from', 'Unknown').split('<')[0].strip()
                 
+                # Add sender context to task title
+                task_title = f"{action} (from {sender})"
+                
                 description = f"From: {sender}\nSubject: {item['subject']}\n\n{item.get('summary', '')}"
                 
                 await todoist.create_task(
-                    content=action,
+                    content=task_title,
                     description=description,
                     priority=3,  # Medium priority (orange)
                     due_string='today',
                     labels=['daily-plan']
                 )
                 created_count += 1
-                logger.info(f"   ✅ Created: {action[:60]}")
+                logger.info(f"   ✅ Created: {task_title[:60]}")
         
         # Create tasks for important calendar events (next 3 days)
         logger.info("\n   Creating tasks for calendar events...")
