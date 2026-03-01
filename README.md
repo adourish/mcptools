@@ -467,6 +467,124 @@ See [docs/architecture.md](docs/architecture.md) for detailed class diagram and 
 
 ---
 
+### Complete Skill Dependencies
+
+This system integrates with multiple skills and external guides for comprehensive functionality.
+
+#### Skill Dependency Diagram
+
+```mermaid
+graph TD
+    A[MCP Daily Planning System] --> B[Email Analysis]
+    A --> C[Calendar Integration]
+    A --> D[Task Management]
+    A --> E[Note Creation]
+    A --> F[Scheduling]
+    
+    B --> G[Gmail API]
+    B --> H[OpenRouter AI]
+    B --> I[Thread Grouping]
+    
+    C --> J[Google Calendar API]
+    C --> K[Event Filtering]
+    
+    D --> L[Todoist API]
+    D --> M[Label Management]
+    D --> N[Priority Assignment]
+    
+    E --> O[Amplenote API]
+    E --> P[Note Templates]
+    
+    F --> Q[Python Scheduler]
+    F --> R[Windows Task Scheduler]
+    
+    A --> S[External Skills]
+    S --> T[Media Filing Guide]
+    S --> U[File Organization]
+    S --> V[Tool Filing Guide]
+    
+    style A fill:#0066cc,color:#fff
+    style S fill:#ff6600,color:#fff
+```
+
+#### Core Component Dependencies
+
+| Component | Dependencies | Purpose | Status |
+|-----------|-------------|---------|--------|
+| **run_process_new_v2.py** | auth_manager, gmail_tools, calendar_tools, todoist_tools, comprehensive_analyzer | Main orchestrator | ✅ Production |
+| **auth_manager.py** | environments.json | Credential management | ✅ Production |
+| **gmail_tools.py** | Gmail API, auth_manager | Email fetching | ✅ Production |
+| **gmail_thread_tools.py** | gmail_tools | Thread grouping | ✅ Production |
+| **calendar_tools.py** | Google Calendar API, auth_manager | Event fetching | ✅ Production |
+| **todoist_tools.py** | Todoist API, auth_manager | Task creation | ✅ Production |
+| **amplenote_tools.py** | Amplenote API, auth_manager, OpenRouter | Note creation | ✅ Optional |
+| **comprehensive_analyzer.py** | OpenRouter API, auth_manager | AI analysis | ✅ Production |
+| **scheduler.py** | schedule, filelock, run_process_new_v2 | Automated execution | ✅ Production |
+
+#### External Skill Dependencies
+
+| Skill | Location | Purpose | Integration |
+|-------|----------|---------|-------------|
+| **Media Filing** | `G:\My Drive\04_Resources\Media\HOW_TO_FILE_MEDIA.md` | Media organization rules | Referenced for file organization |
+| **File Organization** | `G:\My Drive\06_Skills\automation\skill_file_organization.md` | Complete PARA filing system | Download processing workflow |
+| **Tool Filing** | `G:\My Drive\06_Skills\_tools\HOW_TO_FILE_TOOLS.md` | Skills folder organization | Tool categorization |
+| **Diagram Tools** | `G:\My Drive\06_Skills\documentation\diagram-tools\` | Mermaid to Visio conversion | Documentation generation |
+
+#### Python Package Dependencies
+
+| Package | Version | Purpose | Required |
+|---------|---------|---------|----------|
+| google-auth | Latest | Gmail/Calendar OAuth | ✅ Yes |
+| google-auth-oauthlib | Latest | OAuth flow | ✅ Yes |
+| google-auth-httplib2 | Latest | HTTP transport | ✅ Yes |
+| google-api-python-client | Latest | Gmail/Calendar APIs | ✅ Yes |
+| requests | Latest | HTTP requests | ✅ Yes |
+| schedule | Latest | Task scheduling | ✅ Yes (for scheduler) |
+| filelock | Latest | Concurrent run prevention | ✅ Yes (for scheduler) |
+| pathlib | Built-in | Path handling | ✅ Yes |
+| asyncio | Built-in | Async operations | ✅ Yes |
+| argparse | Built-in | CLI arguments | ✅ Yes |
+
+#### API Service Dependencies
+
+| Service | Type | Authentication | Rate Limits | Cost |
+|---------|------|----------------|-------------|------|
+| **Gmail API** | OAuth 2.0 | `gmail_credentials.json` | 250 quota units/user/sec | Free |
+| **Google Calendar API** | OAuth 2.0 | `calendar_credentials.json` | 1M requests/day | Free |
+| **Todoist API** | Bearer Token | API token in environments.json | No published limit | Free tier available |
+| **OpenRouter API** | API Key | API key in environments.json | Varies by plan | Pay per use |
+| **Amplenote API** | OAuth 2.0 | OAuth token in environments.json | No published limit | Free tier available |
+
+#### Configuration Dependencies
+
+| File | Location | Purpose | Required |
+|------|----------|---------|----------|
+| **environments.json** | `G:\My Drive\03_Areas\Keys\Environments\` | All API credentials | ✅ Yes |
+| **gmail_credentials.json** | Same as environments.json | Gmail OAuth | ✅ Yes |
+| **calendar_credentials.json** | Same as environments.json | Calendar OAuth | ✅ Yes |
+| **token.pickle** | Generated at runtime | Cached OAuth tokens | Auto-generated |
+
+#### Scheduler Dependencies
+
+| Component | Type | Purpose | Platform |
+|-----------|------|---------|----------|
+| **scheduler.py** | Python script | Continuous scheduling | Cross-platform |
+| **Windows Task Scheduler** | OS service | Watchdog for scheduler.py | Windows only |
+| **Cron** | OS service | Alternative scheduler | Linux/Mac |
+| **Systemd** | OS service | Service management | Linux |
+
+#### Output Dependencies
+
+| Output | Location | Format | Purpose |
+|--------|----------|--------|---------|
+| **Todoist Tasks** | Todoist app/API | Tasks with labels | Primary output |
+| **JSON Analysis** | `output/comprehensive_analysis_*.json` | JSON | Detailed analysis log |
+| **Amplenote Note** | Amplenote app/API | Markdown note | Optional summary |
+| **Console Log** | stdout | Text | Execution trace |
+| **Scheduler Log** | `logs/scheduler_*.log` | Text | Scheduler activity |
+
+---
+
 ### API Specifications
 
 #### Gmail API
