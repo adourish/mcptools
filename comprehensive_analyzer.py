@@ -50,34 +50,50 @@ class ComprehensiveAnalyzer:
         thread_text = self._build_thread_context(emails)
         
         # Create analysis prompt
-        prompt = f"""Analyze this email thread comprehensively and provide actionable insights.
+        prompt = f"""Analyze this email thread and extract ONLY specific, concrete actions I need to take.
 
 THREAD SUBJECT: {thread_subject}
 
 THREAD CONTENT (chronological order, oldest to newest):
 {thread_text}
 
-Please analyze this thread and provide:
+CRITICAL INSTRUCTIONS:
+- Only include action items that are SPECIFIC and CONCRETE (e.g., "Reply to Sarah about the meeting time", "Review the attached budget spreadsheet")
+- NEVER include vague actions like "consider best practices", "review options", "think about", "explore possibilities"
+- If the email is just informational (newsletter, announcement, FYI), state "None - informational only"
+- If someone else is handling it, state "None - waiting on [person]"
+- Focus on what I can DO RIGHT NOW, not general advice
 
-1. **SUMMARY** (2-3 sentences): What is this conversation about? What's the main topic/issue?
+Please provide:
 
-2. **OUTCOME** (1-2 sentences): What has been resolved, decided, or concluded? If nothing resolved yet, state "Ongoing - no resolution yet"
+1. **SUMMARY** (1-2 sentences): What is this about? What happened?
 
-3. **ACTION ITEMS** (bullet list): What specific actions do I need to take? Be concrete and actionable. If none, state "None - informational only"
+2. **OUTCOME** (1 sentence): What's been decided/resolved? If nothing, state "Pending"
 
-4. **FOLLOW-UP NEEDED** (Yes/No + reason): Do I need to follow up? When and why?
+3. **ACTION ITEMS** (bullet list): ONLY specific actions I must take. Examples of GOOD actions:
+   - "Reply to confirm attendance"
+   - "Review the attached agenda and note conflicts"
+   - "Forward the certification details to Justin"
+   
+   Examples of BAD actions (DO NOT INCLUDE):
+   - "Consider best practices"
+   - "Review current processes"
+   - "Think about options"
+   - "Explore strategies"
 
-5. **PRIORITY** (High/Medium/Low + reason): How urgent is this based on the content and timeline?
+4. **FOLLOW_UP**: Yes/No - if yes, specify WHO and WHEN
 
-6. **KEY CONTEXT** (1 sentence): The most important thing to remember about this thread.
+5. **PRIORITY**: High (urgent/time-sensitive), Medium (important but not urgent), Low (FYI/informational)
 
-Format your response as:
-SUMMARY: [your summary]
-OUTCOME: [outcome or status]
-ACTION ITEMS: [list or "None"]
-FOLLOW_UP: [Yes/No - reason]
+6. **CONTEXT** (1 sentence): Why this matters
+
+Format:
+SUMMARY: [summary]
+OUTCOME: [outcome]
+ACTION ITEMS: [specific actions or "None"]
+FOLLOW_UP: [Yes/No - details]
 PRIORITY: [level - reason]
-CONTEXT: [key context]
+CONTEXT: [context]
 """
         
         try:
