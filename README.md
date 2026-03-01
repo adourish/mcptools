@@ -585,6 +585,234 @@ graph TD
 
 ---
 
+### Scripts and Tools Reference
+
+Complete catalog of all scripts and tools in the MCP Daily Planning System.
+
+#### Tool Organization Diagram
+
+```mermaid
+graph TB
+    subgraph Production["🚀 Production Tools"]
+        MAIN[run_process_new_v2.py]
+        SCHED[scheduler.py]
+        
+        subgraph Core["Core Libraries"]
+            AUTH[auth_manager.py]
+            GMAIL[gmail_tools.py]
+            THREAD[gmail_thread_tools.py]
+            CAL[calendar_tools.py]
+            TODO[todoist_tools.py]
+            AMP[amplenote_tools.py]
+            ANALYZE[comprehensive_analyzer.py]
+        end
+        
+        subgraph Setup["Setup Scripts"]
+            WINSCHED[setup_windows_scheduler.ps1]
+            HYBRID[setup_hybrid_scheduler.ps1]
+        end
+    end
+    
+    subgraph Utilities["🔧 Utility Scripts"]
+        subgraph Check["Check/Verify"]
+            CHECKCAL[check_calendar.py]
+            CHECKTODO[check_todoist.py]
+            CHECKAMP[check_amplenote.py]
+            CHECKOUT[check_latest_output.py]
+        end
+        
+        subgraph Cleanup["Cleanup"]
+            CLEANTODO[cleanup_todoist.py]
+            CLEANOLD[cleanup_old_daily_plans.py]
+            DELPLAN[delete_all_daily_plans.py]
+        end
+        
+        subgraph Analysis["Analysis/Debug"]
+            ANALYZEALL[analyze_all_emails.py]
+            DEEP[deep_email_analysis.py]
+            DEBUG[debug_amplenote.py]
+        end
+    end
+    
+    subgraph Testing["🧪 Testing/Development"]
+        TESTMEM[test_membership_filter.py]
+        TESTMOT[test_motley_filter.py]
+        TESTSCH[test_school_emails.py]
+    end
+    
+    MAIN --> AUTH
+    MAIN --> GMAIL
+    MAIN --> THREAD
+    MAIN --> CAL
+    MAIN --> TODO
+    MAIN --> AMP
+    MAIN --> ANALYZE
+    
+    SCHED --> MAIN
+    WINSCHED -.-> SCHED
+    HYBRID -.-> SCHED
+    
+    style MAIN fill:#0066cc,color:#fff
+    style SCHED fill:#0066cc,color:#fff
+    style Production fill:#e6f2ff
+    style Utilities fill:#fff4e6
+    style Testing fill:#f0f0f0
+```
+
+#### Production Tools
+
+| Tool | Purpose | Type | Status |
+|------|---------|------|--------|
+| **run_process_new_v2.py** | Main orchestrator - runs complete daily planning workflow | Main Script | ✅ Production |
+| **scheduler.py** | Automated scheduling with continuous execution | Scheduler | ✅ Production |
+| **auth_manager.py** | Centralized credential management | Core Library | ✅ Production |
+| **gmail_tools.py** | Gmail API integration for email fetching | Core Library | ✅ Production |
+| **gmail_thread_tools.py** | Email thread grouping and analysis | Core Library | ✅ Production |
+| **calendar_tools.py** | Google Calendar API integration | Core Library | ✅ Production |
+| **todoist_tools.py** | Todoist API integration for task management | Core Library | ✅ Production |
+| **amplenote_tools.py** | Amplenote API integration for note creation | Core Library | ✅ Optional |
+| **comprehensive_analyzer.py** | AI-powered email analysis using OpenRouter | Core Library | ✅ Production |
+| **drive_tools.py** | Google Drive integration | Core Library | ✅ Production |
+| **filesystem_tools.py** | File system operations | Core Library | ✅ Production |
+
+#### Setup Scripts
+
+| Script | Purpose | Platform | Usage |
+|--------|---------|----------|-------|
+| **setup_windows_scheduler.ps1** | Configure Windows Task Scheduler for automated runs | Windows | One-time setup |
+| **setup_hybrid_scheduler.ps1** | Set up hybrid Python + Task Scheduler watchdog | Windows | Recommended setup |
+
+#### Utility Scripts
+
+**Check/Verify Tools:**
+
+| Script | Purpose | Use Case |
+|--------|---------|----------|
+| **check_calendar.py** | Display upcoming calendar events | Verify calendar integration |
+| **check_todoist.py** | List current Todoist tasks with daily-plan label | Verify task creation |
+| **check_todoist_tasks.py** | Detailed Todoist task inspection | Debug task issues |
+| **check_all_tasks.py** | List all tasks matching criteria | Find specific tasks |
+| **check_amplenote.py** | Verify Amplenote connection | Test Amplenote API |
+| **check_amplenote_note.py** | Display specific Amplenote note | Verify note creation |
+| **check_daily_plan_notes.py** | List all daily plan notes | Audit note history |
+| **check_note.py** | Generic note checker | Debug note issues |
+| **check_latest_output.py** | Display most recent analysis output | Review last run |
+| **get_exact_title.py** | Get exact Todoist task title | Debug title formatting |
+| **get_daily_plan_format.py** | Show daily plan format | Verify formatting |
+
+**Cleanup Tools:**
+
+| Script | Purpose | Use Case |
+|--------|---------|----------|
+| **cleanup_todoist.py** | Remove old daily-plan tasks | Manual cleanup |
+| **cleanup_old_daily_plans.py** | Delete old daily plan tasks | Maintenance |
+| **delete_all_daily_plans.py** | Delete all daily plan tasks | Reset/testing |
+| **delete_dated_daily_plan.py** | Delete specific dated plan | Targeted cleanup |
+
+**Analysis/Debug Tools:**
+
+| Script | Purpose | Use Case |
+|--------|---------|----------|
+| **analyze_all_emails.py** | Analyze all emails in inbox | Bulk analysis |
+| **deep_email_analysis.py** | Detailed single email analysis | Debug email parsing |
+| **analyze_spam_email.py** | Test spam detection | Filter tuning |
+| **investigate_conference.py** | Analyze conference-related emails | Specific investigation |
+| **check_summer_camp_email.py** | Check specific email type | Filter testing |
+| **debug_amplenote.py** | Debug Amplenote integration | API troubleshooting |
+
+#### Testing/Development Scripts
+
+| Script | Purpose | Status |
+|--------|---------|--------|
+| **test_membership_filter.py** | Test email membership filtering | Development |
+| **test_motley_filter.py** | Test Motley Fool email filtering | Development |
+| **test_school_emails.py** | Test school email processing | Development |
+| **test_amplenote_format.py** | Test Amplenote formatting | Development |
+| **test_amplenote_update.py** | Test Amplenote updates | Development |
+
+#### Amplenote Utility Scripts
+
+| Script | Purpose | Status |
+|--------|---------|--------|
+| **search_amplenote.py** | Search Amplenote notes | Utility |
+| **search_amplenote_v2.py** | Enhanced search | Utility |
+| **search_amplenote_improved.py** | Improved search | Utility |
+| **search_amplenote_tags.py** | Search by tags | Utility |
+| **get_amplenote_note.py** | Retrieve specific note | Utility |
+| **add_content_to_note.py** | Add content to existing note | Utility |
+| **create_note_with_content.py** | Create note with content | Utility |
+| **verify_note_content.py** | Verify note content | Utility |
+| **create_amplenote_mushroom_guide.py** | Create mushroom guide note | Example |
+| **update_amplenote_mushroom_guide.py** | Update mushroom guide | Example |
+| **create_mushroom_note_line_by_line.py** | Line-by-line note creation | Example |
+| **create_mushroom_note_properly.py** | Proper note creation | Example |
+| **recreate_mushroom_note.py** | Recreate note | Example |
+| **final_amplenote_attempt.py** | Final attempt at note creation | Example |
+| **use_mcp_create_note.py** | Use MCP for note creation | Example |
+
+#### Legacy/Deprecated Scripts
+
+| Script | Purpose | Status |
+|--------|---------|--------|
+| **run_process_new.py** | Original main script | ⚠️ Deprecated - Use v2 |
+| **server.py** | Web server (unused) | ⚠️ Deprecated |
+
+#### Script Usage Patterns
+
+**Daily Workflow:**
+```bash
+# Automated (recommended)
+python scheduler.py
+
+# Manual execution
+python run_process_new_v2.py
+```
+
+**Verification:**
+```bash
+# Check what was created
+python check_todoist.py
+python check_calendar.py
+python check_latest_output.py
+```
+
+**Cleanup:**
+```bash
+# Remove old tasks
+python cleanup_todoist.py
+
+# Delete all daily plans (reset)
+python delete_all_daily_plans.py
+```
+
+**Debugging:**
+```bash
+# Analyze specific email
+python deep_email_analysis.py
+
+# Test filters
+python test_membership_filter.py
+
+# Debug Amplenote
+python debug_amplenote.py
+```
+
+#### Tool Categories Summary
+
+| Category | Count | Purpose |
+|----------|-------|---------|
+| **Production Tools** | 11 | Core system functionality |
+| **Setup Scripts** | 2 | Initial configuration |
+| **Check/Verify** | 11 | Verification and inspection |
+| **Cleanup** | 4 | Maintenance and cleanup |
+| **Analysis/Debug** | 6 | Troubleshooting and analysis |
+| **Testing** | 5 | Development and testing |
+| **Amplenote Utils** | 16 | Amplenote-specific operations |
+| **Legacy** | 2 | Deprecated scripts |
+| **Total** | 57 | All scripts and tools |
+
+---
+
 ### API Specifications
 
 #### Gmail API
