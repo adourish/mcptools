@@ -16,6 +16,8 @@ class AmplenoteTools:
     def __init__(self, auth_manager):
         self.auth_manager = auth_manager
         self.base_url = "https://api.amplenote.com/v4"
+        self.openrouter_key = None
+        self._openrouter_key_loaded = False
     
     async def _get_headers(self) -> Dict[str, str]:
         """Get headers with auth token"""
@@ -24,6 +26,13 @@ class AmplenoteTools:
             'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json'
         }
+    
+    async def _ensure_openrouter_key(self) -> bool:
+        """Ensure OpenRouter API key is loaded from auth_manager"""
+        if not self._openrouter_key_loaded:
+            self.openrouter_key = await self.auth_manager.get_openrouter_key()
+            self._openrouter_key_loaded = True
+        return self.openrouter_key is not None
     
     async def create_note(
         self,
@@ -389,6 +398,9 @@ class AmplenoteTools:
                     context += f"- {item.get('title', '')}{due}\n"
             
             # Generate AI summary
+            if not await self._ensure_openrouter_key():
+                return "• No AI summary available (OpenRouter key not configured)"
+            
             import requests
             prompt = f"""Analyze this day's schedule and create a bulleted executive summary.
 
@@ -405,7 +417,7 @@ Format as bullet points starting with • or -. Be specific about WHO responded 
             response = requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={
-                    "Authorization": f"Bearer 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",
+                    "Authorization": f"Bearer {self.openrouter_key}",
                     "HTTP-Referer": "https://adourish.github.io",
                     "Content-Type": "application/json"
                 },
